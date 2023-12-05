@@ -43,7 +43,7 @@ This repository contains Terraform code to provision Docker Swarm infrastructure
     - `VSPHERE_USER`: The username for accessing your vSphere environment.
     - `VSPHERE_PASSWORD`: The password associated with the specified vSphere username.
 
-These environment variables are essential for authenticating and connecting to your vSphere environment during the Terraform provisioning process.
+      These environment variables are essential for authenticating and connecting to your vSphere environment during the Terraform provisioning process.
 
 4. Run Terraform commands:
 
