@@ -37,6 +37,13 @@ This repository contains Terraform code to provision Docker Swarm infrastructure
 
     - Adjust the values in the `module "swarm-manager"` and `module "swarm-worker"` blocks to match your environment.
     - Specify the vSphere datacenter, compute cluster, datastore, network, and VM template details.
+  
+   Before running the Terraform scripts, ensure that the following environment variables are set:
+    - `VSPHERE_SERVER`: The address of your vSphere server.
+    - `VSPHERE_USER`: The username for accessing your vSphere environment.
+    - `VSPHERE_PASSWORD`: The password associated with the specified vSphere username.
+
+These environment variables are essential for authenticating and connecting to your vSphere environment during the Terraform provisioning process.
 
 4. Run Terraform commands:
 
