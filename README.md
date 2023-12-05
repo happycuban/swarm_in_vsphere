@@ -105,6 +105,7 @@ Joins manager and worker nodes to the swarm cluster.
 ## Deploying Awesome Stacks with Docker Swarm
 
 Now that your Docker Swarm is gracefully dancing across your servers, it's time to introduce the star performers – Portainer and Traefik! These two stacks will bring a touch of magic to your infrastructure.
+Before deploying these stacks, don't forget to configure DNS to point to one of your Docker Swarm nodes for both Portainer and Traefik. Ensure that the DNS entry for each service resolves to the IP address of a reachable Swarm node. This is crucial for seamless access to the fantastic features provided by Portainer and the magic orchestrated by Traefik.
 
 
 ### Traefik Stack
@@ -127,10 +128,9 @@ The Portainer stack is like the backstage manager for your Docker environment, e
    ```
 
 Feel free to sit back, relax, and enjoy the show as Portainer and Traefik transform your Docker Swarm into a spectacle worth applauding! 🎉✨
-# Additional Playbook Details
-- `deploy_traefik.yml`: Unleashes the power of Traefik on your Docker Swarm.
-- `deploy_portainer.yml`: Deploys the Portainer stack.
 
+http://portainer.domain.local
+http://traefik.domain.local
 
 
 ## Contributing
