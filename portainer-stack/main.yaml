@@ -1,0 +1,21 @@
+---
+- name: Run docker Portainer Stack
+  hosts: all
+  become: yes  # This playbook requires root privileges
+
+  tasks:
+    - name: Copy portainer-stack.yml
+      ansible.builtin.copy:
+        src: portainer-stack.yml
+        dest: "/home/sysadmin/Apps/portainer-stack/"
+        owner: "sysadmin"
+        group: "sysadmin"
+        mode: "0644"
+
+    - name: Run stack
+      become: true
+      become_user: "sysadmin"
+      ansible.builtin.command:
+        chdir: "/home/sysadmin/Apps/portainer-stack/"
+        cmd: docker stack deploy -c portainer-stack.yml portainer
+      changed_when: false

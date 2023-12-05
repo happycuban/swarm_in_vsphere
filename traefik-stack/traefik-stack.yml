@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+    traefik:
+        image: traefik:v2.6
+        ports:
+          - target: 80
+            published: 80
+        command:
+          - "--api=true"
+          - "--api.insecure=true"
+          - "--api.dashboard=true"
+          - "--providers.docker=true"
+          - "--providers.docker.swarmMode=true"
+          - "--providers.docker.exposedByDefault=false"
+          - "--providers.docker.network=proxy"
+          - "--entrypoints.web.address=:80"
+          - "--accesslog"
+          - "--log.level=info"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+          - traefik:/data/traefik
+        networks:
+          - proxy
+        deploy:
+            mode: global
+            placement:
+                constraints:
+                    - node.role == manager
+            labels:
+              - "traefik.enable=true"
+              - "traefik.docker.network=proxy"
+              - "traefik.http.routers.traefik.rule=Host(`traefik.domain.local`)"
+              - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+              - "traefik.http.routers.traefik.entrypoints=web"
+networks:
+    proxy:
+        external: true
+volumes:
+  traefik:
+    driver: local

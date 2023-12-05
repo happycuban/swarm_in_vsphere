@@ -1,0 +1,21 @@
+---
+- name: Run docker Traefik Stack
+  hosts: all
+  become: yes  # This playbook requires root privileges
+
+  tasks:
+    - name: Copy traefik-stack.yml
+      ansible.builtin.copy:
+        src: traefik-stack.yml
+        dest: "/home/sysadmin/Apps/traefik-stack/"
+        owner: "sysadmin"
+        group: "sysadmin"
+        mode: "0644"
+
+    - name: Run stack
+      become: true
+      become_user: "sysadmin"
+      ansible.builtin.command:
+        chdir: "/home/sysadmin/Apps/traefik-stack/"
+        cmd: docker stack deploy -c traefik-stack.yml traefik
+      changed_when: false
