@@ -62,37 +62,37 @@ Once the VMs are provisioned by Terraform, you can use Ansible to configure and 
 
 2. Write the IPs into the `ansible/inventory.yaml` file:
 
-```yaml
-all:
-  children:
-    manager:
-      hosts:
-        xx.xx.xx.xx:
-        xx.xx.xx.xx: 
-    worker:
-      hosts:
-        xx.xx.xx.xx:
-        xx.xx.xx.xx: 
-  vars:
-    ansible_user: sysadmin
-    ansible_ssh_private_key_file: "/path_to_key/.ssh/terraform.key"
-    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-    ansible_python_interpreter: "/usr/bin/python3"
-
+   ```yaml
+   all:
+     children:
+       manager:
+         hosts:
+           xx.xx.xx.xx:
+           xx.xx.xx.xx: 
+       worker:
+         hosts:
+           xx.xx.xx.xx:
+           xx.xx.xx.xx: 
+     vars:
+       ansible_user: sysadmin
+       ansible_ssh_private_key_file: "/path_to_key/.ssh/terraform.key"
+       ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+       ansible_python_interpreter: "/usr/bin/python3"
+   ```
 
 Once the VMs are provisioned by Terraform, use Ansible to configure and manage them. Below are Ansible playbooks for installing Docker and configuring Docker Swarm.
 
 ### Install Docker
 
-```bash
-ansible-playbook -i inventory.yaml docker.yml
-```
+   ```bash
+   ansible-playbook -i inventory.yaml docker.yml
+   ```
 
 ### Initialize Swarm Cluster
 
-```bash
-ansible-playbook -i inventory.yaml swarm.yml
-```
+   ```bash
+   ansible-playbook -i inventory.yaml swarm.yml
+   ```
 
 ## Swarm Playbook Explanation:
 
