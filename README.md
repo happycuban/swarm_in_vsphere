@@ -129,8 +129,8 @@ The Portainer stack is like the backstage manager for your Docker environment, e
 
 Feel free to sit back, relax, and enjoy the show as Portainer and Traefik transform your Docker Swarm into a spectacle worth applauding! 🎉✨
 
-http://portainer.domain.local
-http://traefik.domain.local
+Access Portainer at: http://portainer.domain.local
+Access Traefik at: http://traefik.domain.local
 
 
 ## Contributing
