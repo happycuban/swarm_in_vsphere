@@ -53,6 +53,55 @@ This repository contains Terraform code to provision Docker Swarm infrastructure
     - **`module "swarm-manager"`**: Configures Docker Swarm manager nodes.
     - **`module "swarm-worker"`**: Configures Docker Swarm worker nodes.
 
+
+## Ansible Configuration
+
+Once the VMs are provisioned by Terraform, you can use Ansible to configure and manage them. Follow the steps below:
+
+1. Retrieve the IPs from the provisioned VMs.
+
+2. Write the IPs into the `ansible/inventory.yaml` file:
+
+```yaml
+all:
+  children:
+    manager:
+      hosts:
+        xx.xx.xx.xx:
+        xx.xx.xx.xx: 
+    worker:
+      hosts:
+        xx.xx.xx.xx:
+        xx.xx.xx.xx: 
+  vars:
+    ansible_user: sysadmin
+    ansible_ssh_private_key_file: "/path_to_key/.ssh/terraform.key"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+    ansible_python_interpreter: "/usr/bin/python3"
+
+
+Once the VMs are provisioned by Terraform, use Ansible to configure and manage them. Below are Ansible playbooks for installing Docker and configuring Docker Swarm.
+
+### Install Docker
+
+```bash
+ansible-playbook -i inventory.yaml docker.yml
+```
+
+### Initialize Swarm Cluster
+
+```bash
+ansible-playbook -i inventory.yaml swarm.yml
+```
+
+## Swarm Playbook Explanation:
+
+The playbook checks the status of each manager and worker node, categorizing them into operational or bootstrap groups.
+It initializes the swarm cluster on the first manager if no managers are operational.
+Retrieves swarm tokens and populates a list of manager IPs.
+Joins manager and worker nodes to the swarm cluster.
+
+
 ## Contributing
 
 Feel free to contribute by opening issues or creating pull requests.
