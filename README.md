@@ -26,36 +26,36 @@ This repository contains Terraform code to provision Docker Swarm infrastructure
    git clone https://github.com/happycuban/swarm_in_vsphere.git
    cd swarm_in_vsphere
 
-  - Update the provider-vsphere/main.tf file with your vSphere environment details.
-  - Navigate to the swarm-iac directory:
-   
-   ```bash
-   cd swarm-iac
+2. Navigate to the `swarm-iac` directory:
 
-2. Update the main.tf file in the swarm-iac directory with your specific configuration:
+    ```bash
+    cd swarm-iac
+    ```
 
-  - Adjust the values in the module "swarm-manager" and module "swarm-worker" blocks to match your environment.
-  - Specify the vSphere datacenter, compute cluster, datastore, network, and VM template details.
-  
-3. Run Terraform commands:
+3. Update the `main.tf` file in the `swarm-iac` directory with your specific configuration:
 
-   ```bash
-   terraform init
-   terraform apply
+    - Adjust the values in the `module "swarm-manager"` and `module "swarm-worker"` blocks to match your environment.
+    - Specify the vSphere datacenter, compute cluster, datastore, network, and VM template details.
 
+4. Run Terraform commands:
 
-**Configuration**
+    ```bash
+    terraform init
+    terraform apply
+    ```
 
-- `provider-vsphere/main.tf`: This file configures the HashiCorp vSphere provider and sets up the required version.
+## Configuration
 
-- `swarm-iac/main.tf`: This file loads and generates Docker Swarm servers using Terraform modules. Adjust the module configurations to customize your infrastructure.
-  - `module "swarm-manager"`: Configures Docker Swarm manager nodes.
-  - `module "swarm-worker"`: Configures Docker Swarm worker nodes.
+- **`provider-vsphere/main.tf`**: This file configures the HashiCorp vSphere provider and sets up the required version.
 
-**Contributing**
+- **`swarm-iac/main.tf`**: This file loads and generates Docker Swarm servers using Terraform modules. Adjust the module configurations to customize your infrastructure.
+    - **`module "swarm-manager"`**: Configures Docker Swarm manager nodes.
+    - **`module "swarm-worker"`**: Configures Docker Swarm worker nodes.
+
+## Contributing
 
 Feel free to contribute by opening issues or creating pull requests.
 
-**License**
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
