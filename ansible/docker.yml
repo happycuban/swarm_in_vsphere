@@ -1,0 +1,75 @@
+---
+- name: Install Docker on Ubuntu
+  hosts: all
+  become: yes  # This playbook requires root privileges
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name: lsb-release,ca-certificates,apt-transport-https,software-properties-common
+        state: present
+        update_cache: yes
+
+    - name: Add Docker GPG key to keyring
+      shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      environment:
+        LC_ALL: C
+      become_user: root
+
+    - name: Add Docker repository to sources.list.d
+      shell: |
+         echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+      environment:
+        LC_ALL: C
+      become_user: root
+
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
+    - name: Check Docker package policy
+      command: apt-cache policy docker-ce
+      become_user: root
+
+    - name: Install Docker CE
+      apt:
+        name: docker-ce
+        state: present
+        update_cache: yes
+
+
+- name: Configure Docker and Docker Compose
+  hosts: all
+  become: yes  # This playbook requires root privileges
+
+  tasks:
+    - name: Create the 'docker' group
+      group:
+        name: docker
+      become: yes
+
+    - name: Add the 'sysadmin' user to the 'docker' group
+      user:
+        name: sysadmin
+        groups: docker
+        append: yes
+      become: yes
+
+    - name: Create the directory for Docker Compose plugins
+      file:
+        path: "~/.docker/cli-plugins"
+        state: directory
+      become: yes
+
+    - name: Download Docker Compose binary
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/v2.16.0/docker-compose-linux-x86_64"
+        dest: "~/.docker/cli-plugins/docker-compose"
+      become: yes
+
+    - name: Set execute permissions for Docker Compose
+      file:
+        path: "~/.docker/cli-plugins/docker-compose"
+        mode: "+x"
+      become: yes

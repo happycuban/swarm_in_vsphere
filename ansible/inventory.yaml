@@ -1,0 +1,13 @@
+all:
+  children:
+    manager:
+      hosts:
+        192.168.10.230:
+    worker:
+      hosts:
+        192.168.10.220:
+  vars:
+    ansible_user: sysadmin
+    ansible_ssh_private_key_file: "/path_to_key/.ssh/terraform.key"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+    ansible_python_interpreter: "/usr/bin/python3"

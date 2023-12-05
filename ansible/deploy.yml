@@ -1,0 +1,35 @@
+---
+- name: Deploy Docker Configuration and Certificate
+  hosts: all
+  become: yes
+  tasks:
+    - name: Deploy CA.crt
+      copy:
+        src: files/certfificate.crt
+        dest: /usr/local/share/ca-certificates/certfificate.crt
+    
+    - name: Deploy daemon.json to /etc/docker
+      copy:
+        src: files/daemon.json
+        dest: /etc/docker/daemon.json
+      notify: Restart Docker
+
+    - name: Run update-ca-certificates
+      command: sudo update-ca-certificates && sudo service docker restart      
+
+    - name: Run Docker Login in Gitlab
+      shell: |
+        echo password | sudo docker login --username username --password-stdin gitlab.local
+      register: login_result
+      when: inventory_hostname in groups['all']
+
+    - name: Show Docker Login Result
+      debug:
+        var: login_result.stdout_lines
+      when: login_result.stdout is defined
+
+  handlers:
+    - name: Restart Docker
+      service:
+        name: docker
+        state: restarted

@@ -1,0 +1,17 @@
+# Terraform
+**/.terraform/*
+.terraform/
+*.tfstate
+*.tfstate.*
+
+*.pem
+*.key
+*.crt
+*.pub
+
+.env
+.env.local
+.env.*.local
+
+# .vscode directory
+.vscode/
