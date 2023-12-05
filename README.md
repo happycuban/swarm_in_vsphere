@@ -25,6 +25,7 @@ This repository contains Terraform code to provision Docker Swarm infrastructure
    ```bash
    git clone https://github.com/happycuban/swarm_in_vsphere.git
    cd swarm_in_vsphere
+   ```
 
 2. Navigate to the `swarm-iac` directory:
 
