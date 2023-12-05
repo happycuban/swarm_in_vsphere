@@ -1,5 +1,15 @@
 # Terraform Infrastructure as Code (IaC) for VMware vSphere
 
+**Overview**
+
+In the contemporary landscape of cloud-centric infrastructure, the need for on-premise solutions remains crucial for many enterprises. Despite the prevalence of cloud-based services, certain companies find it imperative to maintain on-premise environments, often due to regulatory compliance, data sovereignty concerns, or specific operational requirements.
+
+This Terraform Infrastructure as Code (IaC) repository focuses on provisioning Docker Swarm infrastructure on VMware vSphere, offering a streamlined process for on-premise container orchestration. As organizations navigate the complexities of hybrid cloud environments, having the ability to efficiently manage and deploy containerized workloads within on-premise infrastructure becomes a strategic advantage.
+
+The provided Terraform scripts, tailored for vSphere, empower users to orchestrate Docker Swarm clusters seamlessly. This is particularly beneficial for companies with vSphere setups, allowing them to harness the advantages of containerization while maintaining control over their infrastructure.
+
+By acknowledging the significance of on-premise solutions in conjunction with the flexibility of containerization, this tutorial bridges the gap between traditional infrastructure and modern container orchestration. It serves as a valuable resource for those seeking a robust solution for Docker Swarm deployment within their VMware vSphere environments, emphasizing the versatility of Infrastructure as Code in addressing diverse infrastructure needs.
+
 This repository contains Terraform code to provision Docker Swarm infrastructure on VMware vSphere. The code uses the HashiCorp vSphere provider to create and configure virtual machines.
 
 ## Prerequisites
@@ -26,7 +36,8 @@ This repository contains Terraform code to provision Docker Swarm infrastructure
 
   - Adjust the values in the module "swarm-manager" and module "swarm-worker" blocks to match your environment.
   - Specify the vSphere datacenter, compute cluster, datastore, network, and VM template details.
-  - Run Terraform commands:
+  
+3. Run Terraform commands:
 
    ```bash
    terraform init
