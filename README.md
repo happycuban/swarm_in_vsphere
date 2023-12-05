@@ -102,6 +102,37 @@ Retrieves swarm tokens and populates a list of manager IPs.
 Joins manager and worker nodes to the swarm cluster.
 
 
+## Deploying Awesome Stacks with Docker Swarm
+
+Now that your Docker Swarm is gracefully dancing across your servers, it's time to introduce the star performers – Portainer and Traefik! These two stacks will bring a touch of magic to your infrastructure.
+
+
+### Traefik Stack
+
+Enter Traefik, the charismatic traffic conductor of your Docker Swarm circus! This stack knows how to handle traffic with finesse. To let Traefik take the lead, run this Ansible playbook:
+
+   ```bash
+   cd traefik-stack
+   ansible-playbook -i ../inventory.yaml main.yml
+   ```
+
+
+### Portainer Stack
+
+The Portainer stack is like the backstage manager for your Docker environment, ensuring that every container hits the stage with style. To deploy it, run the following Ansible playbook:
+
+   ```bash
+   cd portainer-stack
+   ansible-playbook -i ../inventory.yaml main.yml
+   ```
+
+Feel free to sit back, relax, and enjoy the show as Portainer and Traefik transform your Docker Swarm into a spectacle worth applauding! 🎉✨
+# Additional Playbook Details
+- `deploy_traefik.yml`: Unleashes the power of Traefik on your Docker Swarm.
+- `deploy_portainer.yml`: Deploys the Portainer stack.
+
+
+
 ## Contributing
 
 Feel free to contribute by opening issues or creating pull requests.
