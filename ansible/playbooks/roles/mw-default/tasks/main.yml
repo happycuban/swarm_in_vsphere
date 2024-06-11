@@ -1,0 +1,28 @@
+- name: Deploy CA.crt
+  copy:
+    src: files/mindworking-MW-CA2016-CA.crt
+    dest: /usr/local/share/ca-certificates/mindworking-MW-CA2016-CA.crt
+
+- name: Deploy daemon.json to /etc/docker
+  copy:
+    src: files/daemon.json
+    dest: /etc/docker/daemon.json
+  notify: Restart Docker
+
+- name: Run update-ca-certificates
+  shell: | 
+    sudo update-ca-certificates 
+       
+- name: Run restart docker
+  shell: | 
+    sudo service docker restart
+    
+- name: Run Docker Login in Gitlab
+  shell: |
+    echo vPsVsLxEi8Av9QH8mwRx | sudo docker login --username mw-development-deploy-token2 --password-stdin gitlab.mindworking.local:5050
+  register: login_result
+
+- name: Show Docker Login Result
+  debug:
+    var: login_result.stdout_lines
+  when: login_result.stdout is defined

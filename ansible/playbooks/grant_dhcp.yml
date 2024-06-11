@@ -1,0 +1,7 @@
+---
+- name: Update Netplan Configuration to Use MAC as DHCP Identifier
+  hosts: all
+  tasks:
+    - import_role:
+        name: dhcp
+  

@@ -1,0 +1,69 @@
+---
+
+- name: Verify stacks directory exists (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  file:
+    path: "/mnt/gfs/stacks/autoscaler"
+    state: directory
+
+- name: Create docker-compose stack file (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  template:
+    src: autoscaler-stack.j2
+    dest: /mnt/gfs/stacks/autoscaler/autoscaler-stack.yml
+    mode: 0775
+
+- name: Create prometheus config file (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  template:
+    src: prometheus.j2
+    dest: /mnt/gfs/stacks/autoscaler/prometheus.yml
+    mode: 0775
+
+- name: Install jsondiff Python library
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  pip:
+    name: jsondiff
+
+- name: Install pyyaml Python library
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  pip:
+    name: pyyaml
+
+#- name: Deploy stack from a compose file (on first swarm node)
+#  when: inventory_hostname == groups['swarm_managers'][0]
+#  become: true
+#  become_method: sudo
+#  docker_stack:
+#    state: present
+#    name: traefik
+#    compose:
+#      - /mnt/gfs/stacks/traefik/traefik-stack.yml
+
+- name: Check if the Docker stack exists
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  command: docker stack ls --format "{{ '{{' }}.Name{{ '}}' }}"
+  register: docker_stack_list
+
+- name: Remove previous stack if it existed
+  when: inventory_hostname == groups['swarm_managers'][0] and 'autoscaler' in docker_stack_list.stdout_lines
+  become: true
+  become_method: sudo
+  command: docker stack rm autoscaler
+
+
+- name: Deploy stack from a compose file (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  command: docker stack deploy -c /mnt/gfs/stacks/autoscaler/autoscaler-stack.yml autoscaler --with-registry-auth --prune --resolve-image always

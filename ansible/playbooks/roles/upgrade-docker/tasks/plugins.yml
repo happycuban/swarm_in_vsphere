@@ -1,0 +1,39 @@
+---
+- name: Check if Gluster plugin has already been initialized
+  shell: docker plugin inspect glusterfs
+  register: gluster_plugin_status
+  ignore_errors: true
+
+- name: Disable Docker Gluster plugin
+  shell: docker plugin disable -f glusterfs
+  when: gluster_plugin_status.rc == 0
+  ignore_errors: true
+
+- name: Update Docker Gluster plugin
+  shell: docker plugin upgrade --grant-all-permissions glusterfs trajano/glusterfs-volume-plugin
+  when: gluster_plugin_status.rc == 0
+
+#- name: Set Gluster plugin to use Gluster nodes
+#  shell: >
+#    docker plugin set glusterfs SERVERS={% for host in groups['gluster_nodes'] %}
+#    {{ hostvars[host].ansible_host }}{% if not loop.last %},{% endif %}
+#    {% endfor %}
+#  #when: gluster_plugin_status.rc != 0
+#  #run_once: true
+
+- name: Set Gluster plugin to use Gluster nodes
+  shell: "docker plugin set glusterfs SERVERS={{ groups['gluster_nodes'] | map('extract', hostvars, 'ansible_host') | join(',') }}"
+  when: gluster_plugin_status.rc != 0
+  #delegate_to: localhost  # Adjust based on where you want this command to run
+  #run_once: true
+
+
+#- name: Set Gluster plugin to use Gluster nodes
+#  shell: docker plugin set glusterfs SERVERS={{groups['gluster_nodes'][0]}},{{groups['gluster_nodes'][1]}},{{groups['gluster_nodes'][2]}}
+#  when: gluster_plugin_status.rc != 0
+#  ignore_errors: true
+
+- name: Renable Gluster plugin
+  shell: docker plugin enable glusterfs
+  when: gluster_plugin_status.rc == 0
+  

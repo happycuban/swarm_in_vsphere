@@ -1,0 +1,8 @@
+haproxy_stats_user: admin
+haproxy_stats_password: password1234
+
+services:
+  - name: redis
+    port: 6379
+  - name: elasticsearch
+    port: 9200

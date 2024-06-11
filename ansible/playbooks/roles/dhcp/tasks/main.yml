@@ -1,0 +1,34 @@
+---
+
+- name: Add dhcp-identifier to Netplan configuration
+  become: true
+  become_method: sudo
+  lineinfile:
+    path: /etc/netplan/50-cloud-init.yaml
+    insertafter: '^            dhcp4: true$'
+    line: '            dhcp-identifier: mac'
+    create: no
+  register: netplan_updated
+
+- name: Apply Netplan Configuration
+  become: true
+  become_method: sudo
+  command: netplan apply
+  async: 10
+  poll: 0
+  when: netplan_updated.changed 
+
+- name: Reboot host(s) after Netplan Apply
+  shell: sleep 2 && /sbin/shutdown -r now "ansible reboot request"
+  async: 1
+  poll: 0
+  ignore_errors: true
+  become: true
+  become_method: sudo
+  when: netplan_updated.changed and inventory_hostname != "127.0.0.1" and inventory_hostname != "localhost"
+
+- name: Waiting for host(s) to reboot
+  ansible.builtin.wait_for_connection:
+    delay: 60
+    timeout: 300
+  when: netplan_updated.changed and inventory_hostname != "127.0.0.1" and inventory_hostname != "localhost"

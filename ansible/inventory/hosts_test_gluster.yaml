@@ -1,0 +1,29 @@
+all:
+  vars:
+    ansible_connection: ssh
+    ansible_user: "sysadmin"
+    ansible_become: yes
+    ansible_become_method: sudo
+    #ansible_become_password: sysadmin1
+    ansible_python_interpreter: "/usr/bin/python3"
+    ansible_ssh_private_key_file: "/config/.ssh/terraform.key"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+    device2_hdd_dev: /dev/sdd
+
+swarm_managers:
+  hosts:
+    manager-1: 
+      ansible_host: 192.168.10.220
+
+swarm_workers:
+  hosts:
+    worker-1:
+      ansible_host: 192.168.10.225
+    worker-2:
+      ansible_host: 192.168.10.226
+
+gluster_nodes:
+  hosts:
+    manager-1: {}
+    worker-1: {}
+    worker-2: {}

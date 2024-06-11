@@ -1,0 +1,9 @@
+---
+- hosts: swarm_managers
+  tasks:
+    - import_role:
+       name: traefik
+    - import_role:
+       name: autoscaler
+    - import_role:
+        name: octopus-worker

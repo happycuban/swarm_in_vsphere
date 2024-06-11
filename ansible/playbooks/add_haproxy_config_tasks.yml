@@ -1,0 +1,139 @@
+---
+- name: Get current configuration version
+  uri:
+    url: "{{ haproxy_url }}/configuration/version"
+    method: GET
+    user: "{{ haproxy_api_user }}"
+    password: "{{ haproxy_api_password }}"
+    force_basic_auth: yes
+    status_code: 200
+  register: config_version
+
+- name: Start a new transaction
+  uri:
+    url: "{{ haproxy_url }}/transactions?version={{ config_version.json }}"
+    method: POST
+    user: "{{ haproxy_api_user }}"
+    password: "{{ haproxy_api_password }}"
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+    status_code: 201
+  register: transaction
+
+- name: Set transaction ID
+  set_fact:
+    transaction_id: "{{ transaction.json.id }}"
+
+- name: Check if backend exists
+  uri:
+    url: "{{ haproxy_url }}/configuration/backends/{{ backend_name }}"
+    method: GET
+    user: "{{ haproxy_api_user }}"
+    password: "{{ haproxy_api_password }}"
+    force_basic_auth: yes
+    status_code: [200, 404]
+  register: backend_check
+
+- name: Create backend for elasticsearch if not exists
+  uri:
+    url: "{{ haproxy_url }}/configuration/backends?transaction_id={{ transaction_id }}"
+    method: POST
+    user: "{{ haproxy_api_user }}"
+    password: "{{ haproxy_api_password }}"
+    body_format: json
+    body:
+      name: "{{ backend_name }}"
+      mode: "tcp"
+      options: ["tcp-check"]
+    headers:
+      Content-Type: "application/json"
+    status_code: 202
+  when: backend_check.status == 404
+
+- name: Add servers to the elasticsearch backend if backend created
+  loop: "{{ elasticsearch_servers }}"
+  loop_control:
+    loop_var: server_item
+  uri:
+    url: "{{ haproxy_url }}/configuration/servers?backend={{ backend_name }}&transaction_id={{ transaction_id }}"
+    method: POST
+    user: "{{ haproxy_api_user }}"
+    password: "{{ haproxy_api_password }}"
+    body_format: json
+    #body:
+    #  name: "{{ server_item.server_name }}"
+    #  address: "{{ server_item.address }}"
+    #  port: '{{ server_item.port|int }}'
+    #  check: "{{ server_item.check }}"
+    #  inter: "{{ server_item.inter | int + 0 }}s"
+    body: >
+      {
+        "name": "{{ server_item.server_name }}",
+        "address": "{{ server_item.address }}",
+        "port": {{ server_item.port }},
+        "check": "{{ server_item.check }}"
+      }    
+    headers:
+      Content-Type: "application/json"
+    status_code: 202
+  when: backend_check.status == 404
+
+- name: Check if frontend exists
+  uri:
+    url: "{{ haproxy_url }}/configuration/frontends/{{ frontend_name }}"
+    method: GET
+    user: "{{ haproxy_api_user }}"
+    password: "{{ haproxy_api_password }}"
+    force_basic_auth: yes
+    status_code: [200, 404]
+  register: frontend_check
+
+- name: Create frontend for elasticsearch if not exists
+  uri:
+    url: "{{ haproxy_url }}/configuration/frontends?transaction_id={{ transaction_id }}"
+    method: POST
+    user: "{{ haproxy_api_user }}"
+    password: "{{ haproxy_api_password }}"
+    body_format: json
+    body:
+      name: "{{ frontend_name }}"
+      mode: "tcp"
+      default_backend: "{{ backend_name }}"
+    headers:
+      Content-Type: "application/json"
+    status_code: 202
+  when: frontend_check.status == 404
+
+- name: Add bind to the elasticsearch frontend if frontend created
+  uri:
+    url: "{{ haproxy_url }}/configuration/binds?frontend={{ frontend_name }}&transaction_id={{ transaction_id }}"
+    method: POST
+    user: "{{ haproxy_api_user }}"
+    password: "{{ haproxy_api_password }}"
+    body_format: json
+    #body:
+    #  name: "elasticsearch"
+    #  address: "*"
+    #  port: 9200
+    body: >
+      {
+        "name": "{{ service_name }}",
+        "address": "*",
+        "port": {{ service_port }}
+      }
+    headers:
+      Content-Type: "application/json"
+    status_code: 202
+  when: frontend_check.status == 404
+
+- name: Commit the transaction
+  uri:
+    url: "{{ haproxy_url }}/transactions/{{ transaction_id }}"
+    method: PUT
+    user: "{{ haproxy_api_user }}"
+    password: "{{ haproxy_api_password }}"
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+    status_code: 202

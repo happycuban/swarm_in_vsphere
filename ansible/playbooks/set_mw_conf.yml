@@ -1,0 +1,5 @@
+- hosts: all
+  name: Deploy MW Configuration and Certificate
+  tasks:
+    - import_role:
+        name: mw-default

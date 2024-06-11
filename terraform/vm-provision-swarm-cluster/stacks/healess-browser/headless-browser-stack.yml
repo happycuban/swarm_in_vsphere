@@ -1,0 +1,41 @@
+version: "3.3"
+
+services:
+  mw-service-headless-browser:
+    image: gitlab.mindworking.local:5050/mw-development/mw-service-headless-browser/mw-service-headless-browser:latest
+    volumes:
+      - mw-service-headless-browser-volume:/browsers
+    networks:
+      - mw-service_network
+      - proxy
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config: 
+        parallelism: 2 
+        delay: 10s
+      restart_policy: 
+        condition: on-failure 
+        delay: 5s 
+        max_attempts: 3
+      placement:
+        constraints: [node.role == worker]
+      labels:
+          - traefik.enable=true
+          - traefik.docker.network=proxy
+          - 'traefik.http.routers.mw-service-headless-browser.rule=Host(`hb_dev.mindworking.local`)'
+          - traefik.http.services.mw-service-headless-browser.loadbalancer.server.port=8080
+    environment:
+      - TZ=Europe/Copenhagen
+    
+
+volumes:
+  mw-service-headless-browser-volume:
+    driver: local
+
+networks:
+  mw-service_network:
+    driver: overlay
+    attachable: true
+  proxy:
+    external: true

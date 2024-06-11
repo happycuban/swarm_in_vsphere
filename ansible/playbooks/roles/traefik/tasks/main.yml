@@ -1,0 +1,68 @@
+---
+
+- name: Check for existing Docker network
+  when: inventory_hostname == groups['swarm_managers'][0]
+  command: docker network ls --filter name=^proxy$ --format "{{ '{{' }}.Name{{ '}}' }}"
+  register: docker_network_check
+  ignore_errors: yes
+
+- name: Create Docker network if it does not exist
+  when: inventory_hostname == groups['swarm_managers'][0] and "proxy" not in docker_network_check.stdout_lines
+  command: docker network create --scope=swarm --attachable --driver=overlay proxy
+
+
+- name: Verify stacks directory exists (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  file:
+    path: "/mnt/gfs/stacks/traefik"
+    state: directory
+
+- name: Verify stacks directory exists (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  file:
+    path: "/mnt/gfs/traefik-data"
+    state: directory
+
+- name: Generate admin password hash
+  when: inventory_hostname == groups['swarm_managers'][0]
+  shell: echo $(htpasswd -nb {{traefik_admin_user}} {{traefik_admin_password}}) | sed -e s/\\$/\\$\\$/g
+  register: traefikpassword
+
+- name: Create docker-compose stack file (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  template:
+    src: traefik-stack.j2
+    dest: /mnt/gfs/stacks/traefik/traefik-stack.yml
+    mode: 0775
+
+- name: Install jsondiff Python library
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  pip:
+    name: jsondiff
+
+- name: Install pyyaml Python library
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  pip:
+    name: pyyaml
+
+#- name: Deploy stack from a compose file (on first swarm node)
+#  when: inventory_hostname == groups['swarm_managers'][0]
+#  become: true
+#  become_method: sudo
+#  docker_stack:
+#    state: present
+#    name: traefik
+#    compose:
+#      - /mnt/gfs/stacks/traefik/traefik-stack.yml
+
+- name: Deploy stack from a compose file (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  command: docker stack deploy -c /mnt/gfs/stacks/traefik/traefik-stack.yml traefik --with-registry-auth --prune --resolve-image always

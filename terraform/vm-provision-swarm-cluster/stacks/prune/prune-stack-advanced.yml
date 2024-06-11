@@ -1,0 +1,49 @@
+version: '3.7'
+
+x-default-opts: 
+  &default-opts
+  logging:
+    options:
+      max-size: "1m"
+
+services:
+  image-prune:
+    <<: *default-opts
+    image: docker
+    command: sh -c "while true; do docker image prune -af --filter 'until=24h'; sleep 86400; done"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: global
+
+  volume-prune:
+    <<: *default-opts
+    image: docker
+    command: sh -c "while true; do docker volume prune -f; sleep 86400; done"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: global
+
+  network-prune:
+    <<: *default-opts
+    image: docker
+    command: sh -c "while true; do docker network prune -f; sleep 86400; done"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: global
+
+  container-prune:
+    <<: *default-opts
+    image: docker
+    command: sh -c "while true; do docker container prune -f; sleep 86400; done"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: global
+
+networks:
+  bridge:
+    external: true
+    name: bridge

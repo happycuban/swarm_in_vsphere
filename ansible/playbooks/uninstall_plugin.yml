@@ -1,0 +1,39 @@
+---
+- name: Uninstall Docker Plugin
+  hosts: all
+  become: yes  # Use sudo for the tasks
+  tasks:
+    - name: Disable Docker Plugin
+      command: docker plugin disable glusterfs:latest
+      ignore_errors: yes  # Ignore errors in case the plugin is already disabled
+
+    - name: Remove Docker Plugin
+      command: docker plugin rm glusterfs:latest
+      ignore_errors: yes  # Ignore errors in case the plugin is already removed or was not found
+
+    - name: Verify Plugin Removal
+      command: docker plugin ls
+      register: plugin_list
+
+    - name: Show Remaining Plugins
+      debug:
+        msg: "{{ plugin_list.stdout }}"
+
+    #- name: Check if Gluster plugin has already been initialized
+    #  shell: docker plugin inspect glusterfs
+    #  register: gluster_plugin_status
+    #  ignore_errors: true
+
+    #### REINSTALL PLUGIN ########
+    
+    #- name: Install Docker Gluster plugin
+    #  shell: docker plugin install --alias glusterfs trajano/glusterfs-volume-plugin:v2.0.3 --grant-all-permissions --disable
+    #  when: gluster_plugin_status.rc != 0
+
+    #- name: Set Gluster plugin to use Gluster nodes
+    #  shell: docker plugin set glusterfs SERVERS={{groups['gluster_nodes'][0]}},{{groups['gluster_nodes'][1]}},{{groups['gluster_nodes'][2]}}
+    #  when: gluster_plugin_status.rc != 0
+
+    #- name: Enable Gluster plugin
+    #  shell: docker plugin enable glusterfs
+    #  when: gluster_plugin_status.rc != 0

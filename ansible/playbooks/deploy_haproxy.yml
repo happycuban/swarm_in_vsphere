@@ -1,0 +1,23 @@
+#- hosts: haproxy 
+#  name: Prepare hosts with fix dhcp
+#  tasks:
+#    - import_role:
+#        name: dhcp
+
+#- hosts: haproxy
+#  name: Prepare hosts with default values
+#  tasks:
+#    - import_role:
+#        name: host-defaults
+
+#- hosts: haproxy
+#  name: Upgrade all necesary packages
+#  tasks:
+#    - import_role:
+#        name: upgrade-packages
+
+- hosts: haproxy
+  name: deploy HAProxy with Dataplane
+  tasks:
+    - import_role:
+        name: haproxy-dataplane

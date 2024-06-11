@@ -1,0 +1,173 @@
+Host *
+    AddKeysToAgent yes
+    StrictHostKeyChecking no
+    ControlMaster     auto
+    ControlPath       ~/.ssh/control-%C
+    ControlPersist    yes
+    ServerAliveInterval 120
+
+Host 192.168.10.161
+    HostName 192.168.10.161
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/dev_swarm
+Host 192.168.10.162
+    HostName 192.168.10.162
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/dev_swarm
+Host 192.168.10.163
+    HostName 192.168.10.163
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/dev_swarm
+Host 192.168.10.165
+    HostName 192.168.10.165
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/dev_swarm
+Host 192.168.10.166
+    HostName 192.168.10.166
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/dev_swarm
+Host 192.168.10.171
+    HostName 192.168.10.171
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/tes_swarm
+Host 192.168.10.172
+    HostName 192.168.10.172
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/tes_swarm
+Host 192.168.10.173
+    HostName 192.168.10.173
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/tes_swarm
+Host 10.50.100.101
+    HostName 10.50.100.101
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/sta_swarm
+Host 10.50.100.102
+    HostName 10.50.100.102
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/sta_swarm
+Host 10.50.100.103
+    HostName 10.50.100.103
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/sta_swarm
+Host 192.168.10.211
+    HostName 192.168.10.211
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/ops_swarm
+Host 192.168.10.212
+    HostName 192.168.10.212
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/ops_swarm
+Host 192.168.10.213
+    HostName 192.168.10.213
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/ops_swarm
+Host 192.168.10.215
+    HostName 192.168.10.215
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/ops_swarm
+Host 192.168.10.216
+    HostName 192.168.10.216
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/ops_swarm
+Host 10.50.30.11
+    HostName 10.50.30.11
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/pro_swarm
+Host 10.50.30.12
+    HostName 10.50.30.12
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/pro_swarm
+Host 10.50.30.13
+    HostName 10.50.30.13
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/pro_swarm
+Host 10.50.30.15
+    HostName 10.50.30.15
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/pro_swarm
+Host 10.50.30.16
+    HostName 10.50.30.16
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/pro_swarm
+Host 10.50.30.17
+    HostName 10.50.30.17
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/pro_swarm
+Host 10.50.30.18
+    HostName 10.50.30.18
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/pro_swarm
+Host 192.168.10.16
+    HostName 192.168.10.16
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/haproxy
+Host 192.168.10.17
+    HostName 192.168.10.17
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/haproxy
+Host 192.168.10.19
+    HostName 192.168.10.19
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/haproxy
+Host 192.168.10.20
+    HostName 192.168.10.20
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/haproxy
+Host 10.50.10.31
+    HostName 10.50.10.31
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/haproxy
+Host 10.50.10.32
+    HostName 10.50.10.32
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/haproxy
+Host 10.50.10.20
+    HostName 10.50.10.20
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/haproxy
+Host 10.50.10.21
+    HostName 10.50.10.21
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/haproxy
+Host 10.50.10.27
+    HostName 10.50.10.27
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/haproxy
+Host 10.50.10.26
+    HostName 10.50.10.26
+    User sysadmin
+    Port 22
+    IdentityFile /home/sysadmin/.ssh/haproxy

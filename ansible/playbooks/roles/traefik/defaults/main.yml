@@ -1,0 +1,14 @@
+app_domain_name: mindworking.local
+traefik_listen_port: 80
+traefik_admin_port: 8080
+traefik_network_name: proxy
+traefik_app_name: traefik
+traefik_admin_user: admin
+traefik_admin_password: Fair4all
+services:
+  - name: redis
+    port: 6379
+  - name: elasticsearch
+    port: 9200
+  - name: rabbitmq
+    port: 5672

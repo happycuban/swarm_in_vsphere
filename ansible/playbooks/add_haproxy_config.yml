@@ -1,0 +1,27 @@
+---
+- name: Configure HAProxy via Data Plane API on dev-haproxy-01
+  hosts: dev-haproxy-01
+  gather_facts: no
+  vars:
+    haproxy_api_user: "admin"
+    haproxy_api_password: "adminpwd"
+    urls:
+      - { name: "dev-haproxy-01", url: "http://dev-haproxy-01.mindworking.local:5555/v2/services/haproxy" }
+      - { name: "dev-haproxy-02", url: "http://dev-haproxy-02.mindworking.local:5555/v2/services/haproxy" }
+    service_name: "rabbitmq"
+    service_port: 5672
+    backend_name: "bk_rabbitmq"
+    frontend_name: "ft_rabbitmq"
+    elasticsearch_servers:
+      - { server_name: "dev-mgr-01", address: "dev-mgr-01", port: 5672, check: "enabled", inter: 1s }
+      - { server_name: "dev-mgr-02", address: "dev-mgr-02", port: 5672, check: "enabled", inter: 1s }
+      - { server_name: "dev-mgr-03", address: "dev-mgr-03", port: 5672, check: "enabled", inter: 1s }
+
+  tasks:
+    - name: Iterate through HAProxy instances
+      include_tasks: add_haproxy_config_tasks.yml
+      with_items: "{{ urls }}"
+      loop_control:
+        loop_var: haproxy_item
+      vars:
+        haproxy_url: "{{ haproxy_item.url }}"

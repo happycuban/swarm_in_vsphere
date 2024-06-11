@@ -1,0 +1,55 @@
+---
+- hosts: swarm_workers
+  become: true
+  serial: 1  # Update nodes one at a time
+  tasks:
+    - name: Drain the node
+      command: docker node update --availability drain {{ inventory_hostname }}
+      delegate_to: "{{ groups['swarm_managers'][0] }}"
+
+    - name: Upgrade all packages to the latest version
+      become: true
+      become_method: sudo
+      apt:
+        name: "*"
+        state: latest
+        force_apt_get: true
+        update_cache: yes
+
+    - name: Update Docker
+      become: true
+      become_method: sudo
+      apt:
+        pkg:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: latest
+        force_apt_get: true
+        update_cache: yes
+    
+    - name: Reboot host(s) after Docker install
+      shell: sleep 2 && /sbin/shutdown -r now "ansible reboot request"
+      async: 1
+      poll: 0
+      ignore_errors: true
+      become: true
+      become_method: sudo
+      when: inventory_hostname != "127.0.0.1" and inventory_hostname != "localhost"
+
+    - name: Waiting for host(s) to reboot
+      ansible.builtin.wait_for_connection:
+        delay: 60
+        timeout: 300
+      when: inventory_hostname != "127.0.0.1" and inventory_hostname != "localhost"
+
+
+    - name: Reintroduce the node into the swarm
+      command: docker node update --availability active {{ inventory_hostname }}
+      delegate_to: "{{ groups['swarm_managers'][0] }}"
+
+    - name: Ensure Docker service is restarted
+      systemd:
+        name: docker
+        state: restarted
+        enabled: yes

@@ -1,0 +1,12 @@
+tls:
+    certificates:
+      - certFile: /data/traefik/certs/wildcard.crt
+        keyFile: /data/traefik/certs/wildcard.key
+      - certFile: /data/traefik/certs/another-wildcard.crt
+        keyFile: /data/traefik/certs/another-wildcard.key
+
+    stores:
+        default:
+        defaultCertificate:
+            certFile: /data/traefik/certs/wildcard.crt
+            keyFile: /data/traefik/certs/wildcard.key

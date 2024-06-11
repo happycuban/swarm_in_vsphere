@@ -1,0 +1,191 @@
+---
+
+- hosts: all
+  name: Prepare hosts with default values
+  tasks:
+    - import_role:
+        name: dhcp
+
+- hosts: all
+  name: Prepare hosts with default values
+  tasks:
+    - import_role:
+        name: host-defaults
+
+- hosts: all
+  name: Upgrade all necesary packages
+  tasks:
+    - import_role:
+        name: upgrade-packages
+
+- hosts: swarm_managers
+  name: Install Docker on Manager Nodes
+  tasks:
+    - import_role:
+        name: docker
+
+- hosts: swarm_workers
+  name: Install Docker on Worker Nodes
+  tasks:
+    - import_role:
+        name: map_count
+    - import_role:
+        name: docker
+    
+- hosts: swarm_managers
+  become: true
+  tasks:
+    - name: determine swarm status
+      shell: >
+        docker info --format \{\{.Swarm.LocalNodeState\}\}
+      register: swarm_status
+
+    - name: create swarm_manager_operational group
+      add_host:
+        hostname: "{{ item }}"
+        groups: swarm_manager_operational
+      with_items: "{{ ansible_play_hosts | default(play_hosts) }}"
+      when: "'active' in hostvars[item].swarm_status.stdout_lines"
+      run_once: true
+
+    - name: create swarm_manager_bootstrap group
+      add_host:
+        hostname: "{{ item }}"
+        groups: swarm_manager_bootstrap
+      with_items: "{{ ansible_play_hosts | default(play_hosts) }}"
+      when: "'active' not in hostvars[item].swarm_status.stdout_lines"
+      run_once: true
+
+# determine the status of each worker node and break them
+# into two groups:
+#   - swarm_worker_operational (host is joined to the swarm cluster)
+#   - swarm_worker_bootstrap (host needs to be joined to the cluster)
+- hosts: swarm_workers
+  become: true
+  tasks:
+    - name: determine swarm status
+      shell: >
+        docker info --format \{\{.Swarm.LocalNodeState\}\}
+      register: swarm_status
+
+    - name: create swarm_worker_operational group
+      add_host:
+        hostname: "{{ item }}"
+        groups: swarm_worker_operational
+      with_items: "{{ ansible_play_hosts | default(play_hosts) }}"
+      when: "'active' in hostvars[item].swarm_status.stdout_lines"
+      run_once: true
+
+    - name: create swarm_worker_bootstrap group
+      add_host:
+        hostname: "{{ item }}"
+        groups: swarm_worker_bootstrap
+      with_items: "{{ ansible_play_hosts | default(play_hosts) }}"
+      when: "'active' not in hostvars[item].swarm_status.stdout_lines"
+      run_once: true
+
+# when the swarm_manager_operational group is empty, meaning there
+# are no hosts running swarm, we need to initialize one of the hosts
+# then add it to the swarm_manager_operational group
+- hosts: swarm_manager_bootstrap[0]
+  become: true
+  tasks:
+    - name: initialize swarm cluster
+      shell: >
+        docker swarm init
+        --advertise-addr={{ swarm_iface | default('ens192') }}:2377
+        --data-path-port 7777
+        --default-addr-pool 10.100.0.0/16
+        --default-addr-pool 10.101.0.0/16
+        --default-addr-pool-mask-length 24
+      when: "'swarm_manager_operational' not in groups"
+      register: bootstrap_first_node
+
+    - name: add initialized host to swarm_manager_operational group
+      add_host:
+        hostname: "{{ item }}"
+        groups: swarm_manager_operational
+      with_items: "{{ ansible_play_hosts | default(play_hosts) }}"
+      #when: bootstrap_first_node | changed
+      when: bootstrap_first_node.changed
+
+# retrieve the swarm tokens and populate a list of ips listening on
+# the swarm port 2377
+- hosts: swarm_manager_operational[0]
+  become: true
+  vars:
+    iface: "{{ swarm_iface | default('ens192') }}"
+  tasks:
+    - name: retrieve swarm manager token
+      shell: docker swarm join-token -q manager
+      register: swarm_manager_token
+
+    - name: retrieve swarm worker token
+      shell: docker swarm join-token -q worker
+      register: swarm_worker_token
+
+    - name: populate list of manager ips
+      add_host:
+        hostname: "{{ hostvars[item]['ansible_' + iface]['ipv4']['address'] }}"
+        groups: swarm_manager_ips
+      with_items: "{{ ansible_play_hosts | default(play_hosts) }}"
+
+# join the manager hosts not yet initialized to the swarm cluster
+- hosts: swarm_manager_bootstrap:!swarm_manager_operational
+  become: true
+  vars:
+    token: "{{ hostvars[groups['swarm_manager_operational'][0]]['swarm_manager_token']['stdout'] }}"
+  tasks:
+    - name: join manager nodes to cluster
+      shell: >
+        docker swarm join
+        --advertise-addr={{ swarm_iface | default('ens192') }}:2377
+        --token={{ token }}
+        {{ groups['swarm_manager_ips'][0] }}:2377
+
+# join the worker hosts not yet initialized to the swarm cluster
+- hosts: swarm_worker_bootstrap
+  become: true
+  vars:
+    token: "{{ hostvars[groups['swarm_manager_operational'][0]]['swarm_worker_token']['stdout'] }}"
+  tasks:
+    - name: join worker nodes to cluster
+      shell: >
+        docker swarm join
+        --advertise-addr={{ swarm_iface | default('ens192') }}:2377
+        --token={{ token }}
+        {{ groups['swarm_manager_ips'][0] }}:2377
+
+
+
+- hosts: gluster_nodes
+  name: Deploy GlusterFS
+  tasks:
+    - import_role:
+        name: gluster
+
+- hosts: all
+  name: Deploy MW Configuration and Certificate
+  tasks:
+    - import_role:
+        name: mw-default
+
+##########################
+###### DEPLOY APPS #######
+##########################
+
+- hosts: swarm_managers
+  tasks:
+    - include_vars: "{{playbook_dir}}/config.yml"
+    - import_role:
+        name: traefik
+    - import_role:
+        name: autoscaler
+    - import_role:
+        name: octopus-worker
+
+#- hosts: haproxy
+#  tasks:
+#    - include_vars: "{{playbook_dir}}/config.yml"
+#    - import_role:
+#        name: haproxy

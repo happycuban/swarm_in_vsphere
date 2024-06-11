@@ -1,0 +1,43 @@
+---
+
+- name: Gather current Gluster volume info
+  shell: gluster volume info gfs
+  register: volume_info
+  delegate_to: "{{ groups['gluster_nodes'][0] }}"
+  run_once: true
+
+- name: Extract current Gluster brick hosts
+  set_fact:
+    current_bricks: "{{ volume_info.stdout | regex_findall('Brick\\d+: (\\S+):') }}"
+
+- name: Determine nodes not in volume
+  set_fact:
+    nodes_to_add: "{{ groups['gluster_nodes'] | difference(current_bricks) }}"
+  run_once: true
+
+- name: Display nodes to add
+  debug:
+    msg: "Nodes to be added: {{ nodes_to_add }}"
+  run_once: true
+
+- name: Add new bricks to the volume
+  shell: >
+    gluster volume add-brick gfs replica {{ groups['gluster_nodes'] | length }}
+    {% for node in nodes_to_add %}
+    {{ node }}:/glusterfs/bricks/{{ node }}/brick
+    {% endfor %}
+  when: nodes_to_add | length > 0
+  delegate_to: "{{ groups['gluster_nodes'][0] }}"
+  run_once: true
+
+- name: Verify Gluster Volume Info after expansion
+  shell: gluster volume info
+  register: new_volume_info
+  delegate_to: "{{ groups['gluster_nodes'][0] }}"
+  run_once: true
+
+- name: Display new volume information
+  debug:
+    msg: "{{ new_volume_info.stdout }}"
+  when: nodes_to_add | length > 0
+  run_once: true

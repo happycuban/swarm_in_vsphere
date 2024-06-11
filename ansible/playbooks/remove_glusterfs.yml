@@ -1,0 +1,35 @@
+---
+- name: Remove GlusterFS from VM
+  hosts: gluster_nodes
+  become: true
+  tasks:
+    - name: Unmount GlusterFS volumes
+      mount:
+        path: "/path/to/mounted/volume"
+        state: unmounted
+
+    - name: Stop and disable GlusterFS service
+      systemd:
+        name: glusterd
+        state: stopped
+        enabled: false
+      ignore_errors: yes
+
+
+    - name: Remove GlusterFS packages
+      apt:
+        name:
+          - glusterfs-server
+          - glusterfs-client
+          - glusterfs-common
+        state: absent
+        purge: yes
+
+    - name: Remove GlusterFS configuration and data directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/var/lib/glusterd"
+        - "/etc/glusterfs"
+        - "/var/glusterfs"

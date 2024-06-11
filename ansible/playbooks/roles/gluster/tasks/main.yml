@@ -1,0 +1,7 @@
+---
+- import_tasks: xfs.yml
+- import_tasks: install.yml
+- import_tasks: init.yml
+- import_tasks: add_new_hosts.yml
+- import_tasks: mount.yml
+

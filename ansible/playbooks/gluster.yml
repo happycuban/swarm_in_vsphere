@@ -1,0 +1,4 @@
+- hosts: gluster_nodes
+  tasks:
+    - import_role:
+        name: gluster

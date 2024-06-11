@@ -1,0 +1,66 @@
+---
+- name: Check if Gluster volume is initialized
+  stat:
+    path: "{{gluster_volume_path}}/{{inventory_hostname}}/brick"
+  register: glustervolume
+
+- name: Verify Gluster volume path
+  become: true
+  become_method: sudo
+  file:
+    path: "{{gluster_volume_path}}/{{inventory_hostname}}/brick"
+    state: directory
+
+- name: Initialize Gluster Cluster (on first node)
+  #when: glustervolume.stat.exists == false and inventory_hostname == groups['gluster_nodes'][0]
+  when: inventory_hostname == groups['gluster_nodes'][0]
+  become: true
+  become_method: sudo
+  loop: "{{ groups['gluster_nodes'] }}"
+  shell: gluster peer probe {{ item }}
+
+- name: Create Gluster Volume (on first node)
+  #when: glustervolume.stat.exists == false and inventory_hostname == groups['gluster_nodes'][0]
+  when: inventory_hostname == groups['gluster_nodes'][0]
+  become: true
+  become_method: sudo
+  shell: >
+    gluster volume create {{ gluster_volume_name }} replica {{ groups['gluster_nodes'] | length }}
+    {% for node in groups['gluster_nodes'] %}
+    {{ node }}:{{ gluster_volume_path }}/{{ node }}/brick
+    {% endfor %}
+    force
+  ignore_errors: true
+
+- name: Secure Gluster Volume (on first node)
+  when: inventory_hostname == groups['gluster_nodes'][0]
+  become: true
+  become_method: sudo
+  shell: >
+    gluster volume set {{ gluster_volume_name }} auth.allow
+    {{ groups['gluster_nodes'] | join(',') }}
+
+- name: Start Gluster Volume (on first node)
+  #when: glustervolume.stat.exists == false and inventory_hostname == groups['gluster_nodes'][0]
+  when: inventory_hostname == groups['gluster_nodes'][0]
+  become: true
+  become_method: sudo
+  shell: gluster volume start {{gluster_volume_name}}
+  ignore_errors: true
+
+- name: Wait 60s for Gluster volume to be replicated
+  #when: glustervolume.stat.exists == false and inventory_hostname == groups['gluster_nodes'][0]
+  when: inventory_hostname == groups['gluster_nodes'][0]
+  become: true
+  become_method: sudo
+  shell: sleep 60
+
+- name: Verify Gluster Volume Info (on first node)
+  when: inventory_hostname == groups['gluster_nodes'][0]
+  shell: gluster volume info
+  register: gluster_info
+
+- name: Display Gluster Volume Info
+  when: inventory_hostname == groups['gluster_nodes'][0]
+  debug:
+    msg: "{{ gluster_info.stdout }}"

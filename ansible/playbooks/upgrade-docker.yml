@@ -1,0 +1,10 @@
+---
+- hosts: swarm_managers
+  tasks:
+    - import_role:
+        name: upgrade-docker
+
+- hosts: swarm_workers
+  tasks:
+    - import_role:
+        name: upgrade-docker

@@ -1,0 +1,19 @@
+---
+version: '3.8'
+
+services:
+  mw-service-haproxy:
+    image: gitlab.mindworking.local:5050/mw-development/mw-infrastructure/mw-service-haproxy/mw-service-haproxy:latest
+    command: ["haproxy_{{env_short}}.cfg"]
+    sysctls:
+      - net.ipv4.ip_nonlocal_bind=1
+    ports:
+      - "8404:8404" # stats port
+      - "80:80" # http port
+      - "443:443" # https port
+{% for service in services %}
+      - "{{ service.port }}:{{ service.port }}" # {{ service.name }} port
+{% endfor %}
+    environment:
+      - TZ=Europe/Copenhagen
+    restart: unless-stopped

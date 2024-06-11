@@ -1,0 +1,61 @@
+---
+
+- name: Verify haproxy directory exists
+  file:
+    path: "/home/sysadmin/Apps/haproxy"
+    state: directory
+
+- name: Create docker-compose stack file
+  become: true
+  become_method: sudo
+  template:
+    src: docker-compose.j2
+    dest: /home/sysadmin/Apps/haproxy/docker-compose.yml
+    mode: 0775
+
+- name: Create prometheus config file (on first swarm node)
+  become: true
+  become_method: sudo
+  template:
+    src: haproxy.j2
+    dest: /home/sysadmin/Apps/haproxy/haproxy.cfg
+    mode: 0775    
+
+#- name: Copy docker-compose.yml
+#  ansible.builtin.copy:
+#    src: docker-compose.yml
+#    dest: "/home/sysadmin/Apps/haproxy/"
+#    owner: "sysadmin"
+#    group: "sysadmin"
+#    mode: "0644"
+
+#- name: Copy haproxy.cfg
+#  ansible.builtin.copy:
+#    src: haproxy.cfg
+#    dest: "/home/sysadmin/Apps/haproxy/"
+#    owner: "sysadmin"
+#    group: "sysadmin"
+#    mode: "0644"
+
+- name: Enable docker-compose-pull-up-d.sh update script
+  become: true
+  become_user: "sysadmin"
+  ansible.builtin.file:
+    path: "/home/sysadmin/Apps/haproxy/.docker-compose-pull-up-d.enabled"
+    state: touch
+
+- name: Stop container
+  become: true
+  become_user: "sysadmin"
+  ansible.builtin.command:
+    chdir: "/home/sysadmin/Apps/haproxy/"
+    cmd: docker compose down -v
+  changed_when: false
+
+- name: Run container
+  become: true
+  become_user: "sysadmin"
+  ansible.builtin.command:
+    chdir: "/home/sysadmin/Apps/haproxy/"
+    cmd: docker compose up --detach
+  changed_when: false

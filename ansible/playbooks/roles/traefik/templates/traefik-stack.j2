@@ -1,0 +1,102 @@
+version: '3.8'
+
+x-default-opts: 
+  &default-opts
+  logging:
+    driver: "gelf"
+    options:
+      gelf-address: "udp://127.0.0.1:12201"
+      tag: "traefik-logs"
+
+services:
+  traefik:
+    <<: *default-opts
+    image: gitlab.mindworking.local:5050/mw-development/mw-infrastructure/traefik-stack/traefik-stack:latest
+    command:
+      - "--api=true"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.network=proxy"
+      - "--entrypoints.web.address=:{{ traefik_listen_port }}" # http endpoint
+{% for service in services %}
+      - "--entrypoints.{{ service.name }}.address=:{{ service.port }}"
+{% endfor %}
+      - "--accesslog"
+      - "--log.level=info"
+      - "--ping"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
+    
+    healthcheck:
+      test: ["CMD", "wget", "--tries=1", "--spider", "--quiet", "http://localhost:8080/ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 2
+      start_period: 10s
+
+    ports:
+      - "{{ traefik_listen_port }}:{{ traefik_listen_port }}" # http port
+{% for service in services %}
+      - "{{ service.port }}:{{ service.port }}" # {{ service.name }} port
+{% endfor %}
+      
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-data:/data/traefik
+
+    networks:
+      - {{ traefik_network_name }}
+
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+        preferences:
+          - spread: node.labels.host
+        max_replicas_per_node: 1
+      
+      update_config:
+        order: stop-first
+        parallelism: 1
+
+      rollback_config:
+        order: stop-first
+        parallelism: 1
+
+      restart_policy:
+        condition: on-failure
+
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: proxy
+        traefik.http.routers.traefik.rule: Host(`{{ traefik_app_name }}.{{ env_short }}.{{ app_domain_name }}`)
+        traefik.http.routers.traefik.service: api@internal
+        traefik.http.services.traefik.loadbalancer.server.port: 8080
+        traefik.http.routers.traefik.entrypoints: web
+        #traefik.http.routers.traefik.middlewares: auth
+        #traefik.http.middlewares.auth.basicauth.users: {{ traefikpassword.stdout }}
+        traefik.http.services.dummy-svc.loadbalancer.server.port: 9999
+
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4096M
+        reservations:
+          cpus: "0.5"
+          memory: 1024M
+
+networks:
+  {{ traefik_network_name }}:
+    external: true
+
+volumes:
+  traefik-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "/mnt/gfs/traefik-data"

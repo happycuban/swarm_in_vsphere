@@ -1,0 +1,21 @@
+---
+- name: Delete HAProxy backend and frontend via Data Plane API
+  hosts: dev-haproxy-01
+  gather_facts: no
+  vars:
+    haproxy_api_user: "admin"
+    haproxy_api_password: "adminpwd"
+    urls:
+      - { name: "dev-haproxy-01", url: "http://dev-haproxy-01.mindworking.local:5555/v2/services/haproxy" }
+      - { name: "dev-haproxy-02", url: "http://dev-haproxy-02.mindworking.local:5555/v2/services/haproxy" }
+    backend_name: "bk_redis"
+    frontend_name: "ft_redis"
+
+  tasks:
+    - name: Iterate through HAProxy instances
+      include_tasks: delete_haproxy_config_tasks.yml
+      with_items: "{{ urls }}"
+      loop_control:
+        loop_var: haproxy_item
+      vars:
+        haproxy_url: "{{ haproxy_item.url }}"

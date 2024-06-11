@@ -1,0 +1,40 @@
+---
+
+- name: Update /etc/hosts on all servers
+  hosts: swarm_workers,swarm_managers
+  gather_facts: yes
+  become: true
+  become_method: sudo
+  tasks:
+    - name: Backup /etc/hosts file
+      copy:
+        src: /etc/hosts
+        dest: "/etc/hosts.backup_{{ ansible_date_time.iso8601 }}"
+        remote_src: yes
+      register: backup_hosts
+
+    # DONT OVERWRITE THE EXISTING HOSTS IF EXISTS
+    #- name: Ensure each host's IP and hostname are in /etc/hosts
+    #  lineinfile:
+    #    path: /etc/hosts
+    #    line: "{{ hostvars[item].ansible_default_ipv4.address }} {{ item }}"
+    #    state: present
+    #    create: no
+    #    regexp: '^\s*\S+\s+{{ item }}\s*$'  # This regex matches any line that ends with the host name
+    #  loop: "{{ groups['all'] }}"
+    #  when: 
+    #    - "hostvars[item].ansible_default_ipv4.address is defined"
+    #    - "backup_hosts is changed"
+    
+    # OVERWRITE THE EXISTING HOSTS IF EXISTS
+    - name: Ensure each host's IP and hostname are in /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ hostvars[item].ansible_default_ipv4.address }} {{ item }}"
+        state: present
+        create: no
+        regexp: '^.*\s{{ item }}$'  # This regex matches any line ending with the host name
+      loop: "{{ groups['all'] }}"
+      when: 
+        - "hostvars[item].ansible_default_ipv4.address is defined"
+        - "backup_hosts is changed"

@@ -1,0 +1,111 @@
+global
+    log stdout format raw local0
+    maxconn {{haproxy_global.maxconn}}
+    chroot /var/lib/haproxy
+    log stdout format raw local0 info
+    
+    # Default SSL material locations
+    ca-base /etc/ssl/certs
+    crt-base /etc/ssl/private
+
+    # See: https://ssl-config.mozilla.org/#server=haproxy&server-version=2.0.3&config=intermediate
+    ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
+    ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+    ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
+
+defaults
+    log     global
+    mode  http
+    option  httplog
+    option  dontlognull
+    timeout connect {{haproxy_timeout.connect}}
+    timeout client  {{haproxy_timeout.client}}
+    timeout server  {{haproxy_timeout.server}}
+    timeout http-request 30s
+    #errorfile 400 /usr/local/etc/haproxy/errors/400.http
+    #errorfile 403 /usr/local/etc/haproxy/errors/403.http
+    #errorfile 408 /usr/local/etc/haproxy/errors/408.http
+    #errorfile 500 /usr/local/etc/haproxy/errors/500.http
+    #errorfile 502 /usr/local/etc/haproxy/errors/502.http
+    #errorfile 503 /usr/local/etc/haproxy/errors/503.http
+    #errorfile 504 /usr/local/etc/haproxy/errors/504.http
+
+#---------------------------------------------------------------------
+# Monitoring Configuration
+#---------------------------------------------------------------------
+listen  stats
+        bind *:{{haproxy_monitoring_config.port}} ssl crt /etc/ssl/certs/server-mindworking.local.pem
+        mode  http
+        stats enable
+        stats refresh {{haproxy_monitoring_config.refresh}}
+        stats auth {{haproxy_dashboard.user}}:{{haproxy_dashboard.password}}
+        stats uri  {{haproxy_monitoring_config.uri}}
+{% if haproxy_exporter %}
+        http-request use-service prometheus-exporter if { path /metrics }
+{% endif %}
+
+{% if data_plane_api %}
+userlist haproxy-dataplaneapi
+  user {{dataplaneapi.user}} insecure-password {{dataplaneapi.password}}
+
+program api
+  command {{dataplaneapi.api.command}} --host {{dataplaneapi.api.host}} --port {{dataplaneapi.api.port}} --haproxy-bin {{dataplaneapi.api.haproxy_bin}} --config-file {{dataplaneapi.api.config_file}} --reload-cmd "{{dataplaneapi.api.reload_cmd}}" --restart-cmd "{{dataplaneapi.api.restart_cmd}}" --reload-delay {{dataplaneapi.api.reload_delay}} --userlist haproxy-dataplaneapi
+  no option start-on-reload
+{% endif %}
+
+frontend web
+  bind :80 name web
+  mode http
+  http-request add-header X-Forwarded-Proto http
+  http-request redirect scheme https code 301 unless { ssl_fc }
+
+frontend web_ssl
+  bind :443 ssl crt /etc/ssl/certs/server-mindworking.local.pem
+  mode http
+  http-request add-header X-Forwarded-Proto http
+
+  acl ACL_docker_dev hdr_end(host) -i .dev.mindworking.local
+  use_backend swarm_dev if ACL_docker_dev
+
+backend swarm_dev
+  balance static-rr
+  option tcp-check
+  option forwarded
+  server {{groups['swarm_managers'][0]}} {{groups['swarm_managers'][0]}}:80 check
+  server {{groups['swarm_managers'][1]}} {{groups['swarm_managers'][1]}}:80 check
+  server {{groups['swarm_managers'][2]}} {{groups['swarm_managers'][2]}}:80 check
+
+defaults REDIS
+  mode tcp
+  timeout connect  4s
+  timeout server  30s
+  timeout client  30s
+frontend ft_redis
+  bind :6379 name redis
+  default_backend bk_redis
+backend bk_redis
+  option tcp-check
+  tcp-check send "PING\r\n"
+  tcp-check expect string +PONG
+  tcp-check send "info replication\r\n"
+  tcp-check expect string role:master
+  tcp-check send "QUIT\r\n"
+  tcp-check expect string +OK
+  server {{groups['swarm_managers'][0]}} {{groups['swarm_managers'][0]}}:6379 check inter 1s
+  server {{groups['swarm_managers'][1]}} {{groups['swarm_managers'][1]}}:6379 check inter 1s
+  server {{groups['swarm_managers'][2]}} {{groups['swarm_managers'][2]}}:6379 check inter 1s
+
+defaults ELASTIC
+  mode tcp
+  timeout connect  5000
+  timeout client  10000
+  timeout server  10000
+frontend ft_elastic
+  bind :9200 name elastic
+  default_backend bk_elastic
+backend bk_elastic
+  option tcp-check
+  server {{groups['swarm_managers'][0]}} {{groups['swarm_managers'][0]}}:9200 check inter 1s
+  server {{groups['swarm_managers'][1]}} {{groups['swarm_managers'][1]}}:9200 check inter 1s
+  server {{groups['swarm_managers'][2]}} {{groups['swarm_managers'][2]}}:9200 check inter 1s
+

@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+    haproxy:
+        image: haproxytech/haproxy-debian:{{ haproxy_global.version }}
+        container_name: haproxy
+        #sysctls:
+        #   - net.ipv4.ip_nonlocal_bind=1
+        environment:
+            - TZ=Europe/Copenhagen
+        volumes:
+            - ./config:/usr/local/etc/haproxy:rw
+            - ./server-mindworking.local.pem:/etc/ssl/certs/server-mindworking.local.pem:ro
+        network_mode: host
+        user: root
+        restart: always
+        logging:
+          driver: {{haproxy_logging.driver}}
+          options:
+            max-file: {{haproxy_logging.maxfile}}
+            max-size: {{haproxy_logging.maxsize}}

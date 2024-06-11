@@ -1,0 +1,59 @@
+---
+
+- name: Verify stacks directory exists (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  file:
+    path: "/mnt/gfs/stacks/octopus-worker"
+    state: directory
+
+- name: Create docker-compose stack file (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  template:
+    src: worker-stack.j2
+    dest: /mnt/gfs/stacks/octopus-worker/worker-stack.yml
+    mode: 0775
+
+- name: Create prometheus config file (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  template:
+    src: ca-MW.j2
+    dest: /mnt/gfs/stacks/octopus-worker/ca-MW.crt
+    mode: 0775
+
+- name: Install jsondiff Python library
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  pip:
+    name: jsondiff
+
+- name: Install pyyaml Python library
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  pip:
+    name: pyyaml
+
+- name: Check if the Docker stack exists
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  command: docker stack ls --format "{{ '{{' }}.Name{{ '}}' }}"
+  register: docker_stack_list
+
+- name: Remove previous stack if it existed
+  when: inventory_hostname == groups['swarm_managers'][0] and 'octopus-worker' in docker_stack_list.stdout_lines
+  become: true
+  become_method: sudo
+  command: docker stack rm octopus-worker
+
+
+- name: Deploy stack from a compose file (on first swarm node)
+  when: inventory_hostname == groups['swarm_managers'][0]
+  become: true
+  become_method: sudo
+  command: docker stack deploy -c /mnt/gfs/stacks/octopus-worker/worker-stack.yml octopus-worker --with-registry-auth --prune --resolve-image always

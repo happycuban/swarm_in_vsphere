@@ -1,0 +1,40 @@
+- name: Set Static IP
+  gather_facts: true
+  hosts: swarm_managers:swarm_workers
+  vars:
+    my_iface: "{{ ansible_default_ipv4.interface }}"
+    my_iface_data:
+      addresses:
+        - "{{ ansible_default_ipv4.address }}/24"
+      routes:
+        - to: default
+          via: "{{ ansible_default_ipv4.gateway }}"
+      nameservers:
+        addresses:
+          - 10.4.10.252
+          - 10.4.10.253
+        search:
+          "{{ ansible_dns.search | default('not_found_in_facts') }}"
+  tasks:
+
+    - name: Task 1. prepare network dict
+      ansible.builtin.set_fact:
+        my_network:
+          version: 2
+          ethernets: "{{ { my_iface:my_iface_data } }}"
+
+    - name: Task 2. Showing the new dict
+      ansible.builtin.debug:
+        var: my_network
+
+    - name: Task 3. Build the actual netplan config file
+      ansible.builtin.include_role:
+        name: mrlesmithjr.netplan
+      vars:
+        netplan_enabled: true
+        netplan_config_file: /etc/netplan/00-installer-config.yaml
+        netplan_configuration:
+          network: "{{ my_network }}"
+        netplan_remove_existing: true
+        netplan_check_install: true
+        netplan_apply: true
