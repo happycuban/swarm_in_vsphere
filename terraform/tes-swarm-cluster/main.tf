@@ -3,7 +3,7 @@
 ##################################################################################
 # Provisioning of DOCKER servers
 module "swarm-cluster" {
-  source = "../vm-provision-random"
+  source = "../vm-provision-cluster"
 
   vsphere_datacenter      = "Silkeborgvej (MW-DC2)"
   vsphere_compute_cluster = "MW-CL"

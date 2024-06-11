@@ -1,7 +1,7 @@
 ---
 
 - hosts: all
-  name: Prepare hosts with default values
+  name: Grant DHCP through MAC addree
   tasks:
     - import_role:
         name: dhcp
@@ -31,8 +31,9 @@
         name: map_count
     - import_role:
         name: docker
-    
+            
 - hosts: swarm_managers
+  name: Get Swarm Status for Managers
   become: true
   tasks:
     - name: determine swarm status
@@ -61,6 +62,7 @@
 #   - swarm_worker_operational (host is joined to the swarm cluster)
 #   - swarm_worker_bootstrap (host needs to be joined to the cluster)
 - hosts: swarm_workers
+  name: Get Swarm Status for Workers
   become: true
   tasks:
     - name: determine swarm status
@@ -88,6 +90,7 @@
 # are no hosts running swarm, we need to initialize one of the hosts
 # then add it to the swarm_manager_operational group
 - hosts: swarm_manager_bootstrap[0]
+  name: Initialize Cluster
   become: true
   tasks:
     - name: initialize swarm cluster
@@ -112,6 +115,7 @@
 # retrieve the swarm tokens and populate a list of ips listening on
 # the swarm port 2377
 - hosts: swarm_manager_operational[0]
+  name: Working on Leader Manager
   become: true
   vars:
     iface: "{{ swarm_iface | default('ens192') }}"
@@ -132,6 +136,7 @@
 
 # join the manager hosts not yet initialized to the swarm cluster
 - hosts: swarm_manager_bootstrap:!swarm_manager_operational
+  name: Joining Managers to Cluster
   become: true
   vars:
     token: "{{ hostvars[groups['swarm_manager_operational'][0]]['swarm_manager_token']['stdout'] }}"
@@ -145,6 +150,7 @@
 
 # join the worker hosts not yet initialized to the swarm cluster
 - hosts: swarm_worker_bootstrap
+  name: Joining Workers to Cluster
   become: true
   vars:
     token: "{{ hostvars[groups['swarm_manager_operational'][0]]['swarm_worker_token']['stdout'] }}"
@@ -156,7 +162,11 @@
         --token={{ token }}
         {{ groups['swarm_manager_ips'][0] }}:2377
 
-
+- hosts: all
+  name: Deploy MW Configuration and Certificate
+  tasks:
+    - import_role:
+        name: mw-default
 
 - hosts: gluster_nodes
   name: Deploy GlusterFS
@@ -164,28 +174,17 @@
     - import_role:
         name: gluster
 
-- hosts: all
-  name: Deploy MW Configuration and Certificate
-  tasks:
-    - import_role:
-        name: mw-default
-
 ##########################
 ###### DEPLOY APPS #######
 ##########################
 
 - hosts: swarm_managers
+  name: Deploy Necessary Stacks
   tasks:
-    - include_vars: "{{playbook_dir}}/config.yml"
+    - include_vars: "{{ playbook_dir }}/config.yml"
     - import_role:
-        name: traefik
+        name: stack-traefik
     - import_role:
-        name: autoscaler
+        name: stack-autoscaler
     - import_role:
-        name: octopus-worker
-
-#- hosts: haproxy
-#  tasks:
-#    - include_vars: "{{playbook_dir}}/config.yml"
-#    - import_role:
-#        name: haproxy
+        name: stack-octopus-worker

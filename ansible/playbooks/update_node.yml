@@ -44,12 +44,12 @@
       when: inventory_hostname != "127.0.0.1" and inventory_hostname != "localhost"
 
 
-    - name: Reintroduce the node into the swarm
-      command: docker node update --availability active {{ inventory_hostname }}
-      delegate_to: "{{ groups['swarm_managers'][0] }}"
-
     - name: Ensure Docker service is restarted
       systemd:
         name: docker
         state: restarted
         enabled: yes
+
+    - name: Reintroduce the node into the swarm
+      command: docker node update --availability active {{ inventory_hostname }}
+      delegate_to: "{{ groups['swarm_managers'][0] }}"

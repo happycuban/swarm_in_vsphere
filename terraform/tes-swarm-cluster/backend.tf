@@ -3,8 +3,8 @@ terraform {
     address     = "https://gitlab.mindworking.local/api/v4/projects/165/terraform/state/tes-swarm-cluster"
     lock_address = "https://gitlab.mindworking.local/api/v4/projects/165/terraform/state/tes-swarm-cluster/lock"
     unlock_address = "https://gitlab.mindworking.local/api/v4/projects/165/terraform/state/tes-swarm-cluster/lock"
-    username = "test"
-    password = "glpat-1Yx-2oDFuJgM6wPaUjFa"
+    username = "xxxx"
+    password = "xxxxx"
     skip_cert_verification = true
     lock_method = "POST"
     unlock_method= "DELETE"
